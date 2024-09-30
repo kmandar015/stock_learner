@@ -12,18 +12,15 @@ class ProfileLoading extends ProfileState {}
 class ProfileLoadingError extends ProfileState {
   final dynamic error;
 
-  ProfileLoadingError({
-    @required this.error
-  });
+  ProfileLoadingError({@required this.error});
 }
 
 class ProfileLoaded extends ProfileState {
-
   final ProfileModel profileModel;
   final bool isSymbolSaved;
 
   ProfileLoaded({
-    @required this.profileModel,
-    @required this.isSymbolSaved,
+    required this.profileModel,
+    required this.isSymbolSaved,
   });
 }
