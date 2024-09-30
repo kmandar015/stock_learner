@@ -6,19 +6,13 @@ abstract class PortfolioEvent {}
 class FetchPortfolioData extends PortfolioEvent {}
 
 class SaveProfile extends PortfolioEvent {
-
   final StorageModel storageModel;
 
-  SaveProfile({
-    @required this.storageModel
-  });
+  SaveProfile({required this.storageModel});
 }
 
 class DeleteProfile extends PortfolioEvent {
-
   final String symbol;
 
-  DeleteProfile({
-    @required this.symbol
-  });
+  DeleteProfile({required this.symbol});
 }

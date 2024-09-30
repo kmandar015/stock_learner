@@ -10,25 +10,17 @@ class FetchSearchHistory extends SearchEvent {}
 class FetchSearchResults extends SearchEvent {
   final String symbol;
 
-  FetchSearchResults({
-    @required this.symbol
-  });
+  FetchSearchResults({required this.symbol});
 }
 
 class SaveSearch extends SearchEvent {
-
   final String symbol;
 
-  SaveSearch({
-    @required this.symbol
-  });
+  SaveSearch({required this.symbol});
 }
 
 class DeleteSearch extends SearchEvent {
-
   final String symbol;
 
-  DeleteSearch({
-    @required this.symbol
-  });
+  DeleteSearch({required this.symbol});
 }

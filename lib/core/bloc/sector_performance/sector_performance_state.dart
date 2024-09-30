@@ -9,24 +9,22 @@ class SectorPerformanceError extends SectorPerformanceState {
   final String message;
 
   SectorPerformanceError({
-    @required this.message,
+    required this.message,
   });
 }
 
 class SectorPerformanceLoading extends SectorPerformanceState {}
 
 class SectorPerformanceLoaded extends SectorPerformanceState {
-
   final SectorPerformanceModel sectorPerformance;
   final MarketMoversModelData marketActive;
   final MarketMoversModelData marketGainer;
   final MarketMoversModelData marketLoser;
 
   SectorPerformanceLoaded({
-    @required this.sectorPerformance,
-    @required this.marketActive,
-    @required this.marketGainer,
-    @required this.marketLoser,
+    required this.sectorPerformance,
+    required this.marketActive,
+    required this.marketGainer,
+    required this.marketLoser,
   });
-
 }

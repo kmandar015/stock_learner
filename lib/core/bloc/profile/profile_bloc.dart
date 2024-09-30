@@ -1,23 +1,21 @@
 import 'dart:async';
 
-import 'package:bloc/bloc.dart';
-import 'package:meta/meta.dart';
-
-import 'package:sma/helpers/sentry_helper.dart';
-import 'package:sma/models/profile/profile.dart';
-
-import 'package:sma/respository/portfolio/storage_client.dart';
-import 'package:sma/respository/profile/client.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:stock_learner/core/models/profile/profile.dart';
+import 'package:stock_learner/core/respository/portfolio/storage_client.dart';
+import 'package:stock_learner/core/respository/profile/client.dart';
+import 'package:stock_learner/core/utils/sentry_helper.dart';
 
 part 'profile_event.dart';
 part 'profile_state.dart';
 
 class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
-  
   final _httpClient = ProfileClient();
   final _storageClient = PortfolioStorageClient();
 
-  @override
+  ProfileBloc() : super(ProfileInitial());
+
   ProfileState get initialState => ProfileInitial();
 
   @override
@@ -28,16 +26,15 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     }
   }
 
-  Stream<ProfileState> _mapProfileState({String symbol}) async* {
+  Stream<ProfileState> _mapProfileState({required String symbol}) async* {
     try {
-      yield ProfileLoaded( 
-        profileModel: await this._httpClient.fetchStockData(symbol: symbol),
-        isSymbolSaved: await this._storageClient.symbolExists(symbol: symbol)
-      );
-
+      yield ProfileLoaded(
+          profileModel: await this._httpClient.fetchStockData(symbol: symbol),
+          isSymbolSaved:
+              await this._storageClient.symbolExists(symbol: symbol));
     } catch (e, stack) {
       yield ProfileLoadingError(error: 'Symbol not supported.');
-      await SentryHelper(exception: e,  stackTrace: stack).report();
+      await SentryHelper(exception: e, stackTrace: stack).report();
     }
   }
 }
