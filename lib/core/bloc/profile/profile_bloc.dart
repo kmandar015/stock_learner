@@ -14,26 +14,25 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
   final _httpClient = ProfileClient();
   final _storageClient = PortfolioStorageClient();
 
-  ProfileBloc() : super(ProfileInitial());
-
-  ProfileState get initialState => ProfileInitial();
-
-  @override
-  Stream<ProfileState> mapEventToState(ProfileEvent event) async* {
-    if (event is FetchProfileData) {
-      yield ProfileLoading();
-      yield* _mapProfileState(symbol: event.symbol);
-    }
+  ProfileBloc() : super(ProfileInitial()) {
+    // Registering the handler for the FetchProfileData event
+    on<FetchProfileData>((event, emit) async {
+      emit(ProfileLoading());
+      await _mapProfileState(emit, symbol: event.symbol);
+    });
   }
 
-  Stream<ProfileState> _mapProfileState({required String symbol}) async* {
+  // Refactored _mapProfileState to use emit instead of yield
+  Future<void> _mapProfileState(Emitter<ProfileState> emit,
+      {required String symbol}) async {
     try {
-      yield ProfileLoaded(
-          profileModel: await this._httpClient.fetchStockData(symbol: symbol),
-          isSymbolSaved:
-              await this._storageClient.symbolExists(symbol: symbol));
+      final profileModel = await _httpClient.fetchStockData(symbol: symbol);
+      final isSymbolSaved = await _storageClient.symbolExists(symbol: symbol);
+
+      emit(ProfileLoaded(
+          profileModel: profileModel, isSymbolSaved: isSymbolSaved));
     } catch (e, stack) {
-      yield ProfileLoadingError(error: 'Symbol not supported.');
+      emit(ProfileLoadingError(error: 'Symbol not supported.'));
       await SentryHelper(exception: e, stackTrace: stack).report();
     }
   }

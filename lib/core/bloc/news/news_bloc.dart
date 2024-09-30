@@ -14,18 +14,16 @@ class NewsBloc extends Bloc<NewsEvent, NewsState> {
   final _newsRepository = NewsRepository();
   final _databaseRepository = PortfolioStorageClient();
 
-  NewsBloc() : super(NewsInitial());
-
-  NewsState get initialState => NewsInitial();
-
-  Stream<NewsState> mapEventToState(NewsEvent event) async* {
-    if (event is FetchNews) {
-      yield NewsLoading();
-      yield* _fetchNews();
-    }
+  NewsBloc() : super(NewsInitial()) {
+    // Registering the handler for the FetchNews event
+    on<FetchNews>((event, emit) async {
+      emit(NewsLoading());
+      await _fetchNews(emit);
+    });
   }
 
-  Stream<NewsState> _fetchNews() async* {
+  // Refactored _fetchNews to use emit instead of yield
+  Future<void> _fetchNews(Emitter<NewsState> emit) async {
     try {
       final symbolsStored = await _databaseRepository.fetch();
 
@@ -33,15 +31,15 @@ class NewsBloc extends Bloc<NewsEvent, NewsState> {
         final news = await Future.wait(symbolsStored.map((symbol) async =>
             await _newsRepository.fetchNews(title: symbol.companyName)));
 
-        yield NewsLoaded(news: news);
+        emit(NewsLoaded(news: news));
       } else {
         final news = await Future.wait(['Dow Jones', 'S&P 500', 'Nasdaq'].map(
             (symbol) async => await _newsRepository.fetchNews(title: symbol)));
 
-        yield NewsLoaded(news: news);
+        emit(NewsLoaded(news: news));
       }
     } catch (e, stack) {
-      yield NewsError(message: 'There was an error loading');
+      emit(NewsError(message: 'There was an error loading news'));
       await SentryHelper(exception: e, stackTrace: stack).report();
     }
   }

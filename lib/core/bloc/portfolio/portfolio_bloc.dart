@@ -16,33 +16,27 @@ class PortfolioBloc extends Bloc<PortfolioEvent, PortfolioState> {
   final _databaseRepository = PortfolioStorageClient();
   final _repository = PortfolioClient();
 
-  // Constructor that expects an initial state
-  PortfolioBloc() : super(PortfolioInitial());
+  PortfolioBloc() : super(PortfolioInitial()) {
+    // Registering the handlers for events
+    on<FetchPortfolioData>((event, emit) async {
+      emit(PortfolioLoading());
+      await _loadContent(emit);
+    });
 
-  @override
-  PortfolioState get initialState => PortfolioInitial();
-
-  @override
-  Stream<PortfolioState> mapEventToState(PortfolioEvent event) async* {
-    if (event is FetchPortfolioData) {
-      yield PortfolioLoading();
-      yield* _loadContent();
-    }
-
-    if (event is SaveProfile) {
-      yield PortfolioLoading();
+    on<SaveProfile>((event, emit) async {
+      emit(PortfolioLoading());
       await _databaseRepository.save(storageModel: event.storageModel);
-      yield* _loadContent();
-    }
+      await _loadContent(emit);
+    });
 
-    if (event is DeleteProfile) {
-      yield PortfolioLoading();
+    on<DeleteProfile>((event, emit) async {
+      emit(PortfolioLoading());
       await _databaseRepository.delete(symbol: event.symbol);
-      yield* _loadContent();
-    }
+      await _loadContent(emit);
+    });
   }
 
-  Stream<PortfolioState> _loadContent() async* {
+  Future<void> _loadContent(Emitter<PortfolioState> emit) async {
     try {
       final symbolsStored = await _databaseRepository.fetch();
       final indexes = await _repository.fetchIndexes();
@@ -51,13 +45,13 @@ class PortfolioBloc extends Bloc<PortfolioEvent, PortfolioState> {
         final stocks = await Future.wait(symbolsStored.map((symbol) async =>
             await _repository.fetchStocks(symbol: symbol.symbol)));
 
-        yield PortfolioLoaded(stocks: stocks, indexes: indexes);
+        emit(PortfolioLoaded(stocks: stocks, indexes: indexes));
       } else {
-        yield PortfolioStockEmpty(indexes: indexes);
+        emit(PortfolioStockEmpty(indexes: indexes));
       }
     } catch (e, stack) {
-      yield PortfolioError(
-          message: 'There was an unknown error. Please try again later.');
+      emit(PortfolioError(
+          message: 'There was an unknown error. Please try again later.'));
       await SentryHelper(exception: e, stackTrace: stack).report();
     }
   }

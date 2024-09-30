@@ -11,7 +11,7 @@ class StockMarketAppHome extends StatefulWidget {
   const StockMarketAppHome({super.key});
 
   @override
-  _StockMarketAppHomeState createState() => _StockMarketAppHomeState();
+  State<StockMarketAppHome> createState() => _StockMarketAppHomeState();
 }
 
 class _StockMarketAppHomeState extends State<StockMarketAppHome> {
@@ -27,24 +27,24 @@ class _StockMarketAppHomeState extends State<StockMarketAppHome> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        backgroundColor: kScaffoldBackground,
-        body: tabs.elementAt(_selectedIndex),
-        bottomNavigationBar: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 18.0, vertical: 8),
-            child: GNav(
-                gap: 8,
-                activeColor: Colors.white,
-                iconSize: 24,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
-                duration: const Duration(milliseconds: 800),
-                tabBackgroundColor: Colors.white30,
-                selectedIndex: _selectedIndex,
-                tabs: _bottomNavigationBarItemItems(),
-                onTabChange: _onItemTapped),
-          ),
-        ));
+      backgroundColor: kScaffoldBackground,
+      body: tabs.elementAt(_selectedIndex),
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 18.0, vertical: 8),
+          child: GNav(
+              gap: 8,
+              activeColor: Colors.white,
+              iconSize: 24,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
+              duration: const Duration(milliseconds: 800),
+              tabBackgroundColor: Colors.white30,
+              selectedIndex: _selectedIndex,
+              tabs: _bottomNavigationBarItemItems(),
+              onTabChange: _onItemTapped),
+        ),
+      ),
+    );
   }
 
   List<GButton> _bottomNavigationBarItemItems() {

@@ -13,60 +13,57 @@ part 'search_state.dart';
 class SearchBloc extends Bloc<SearchEvent, SearchState> {
   final _client = SearchClient();
 
-  SearchBloc() : super(SearchInitial());
+  SearchBloc() : super(SearchInitial()) {
+    // Event handlers
+    on<FetchSearchHistory>((event, emit) async {
+      emit(SearchLoading());
+      await _fetchSavedSearches(emit);
+    });
 
-  @override
-  SearchState get initialState => SearchInitial();
+    on<SaveSearch>((event, emit) async {
+      await _client.save(symbol: event.symbol);
+      await _fetchSavedSearches(emit);
+    });
 
-  @override
-  Stream<SearchState> mapEventToState(SearchEvent event) async* {
-    if (event is FetchSearchHistory) {
-      yield SearchLoading();
-      yield* _fetchSavedSearches();
-    }
+    on<DeleteSearch>((event, emit) async {
+      await _client.delete(symbol: event.symbol);
+      await _fetchSavedSearches(emit);
+    });
 
-    if (event is SaveSearch) {
-      await this._client.save(symbol: event.symbol);
-      yield* _fetchSavedSearches();
-    }
-
-    if (event is DeleteSearch) {
-      await this._client.delete(symbol: event.symbol);
-      yield* _fetchSavedSearches();
-    }
-
-    if (event is FetchSearchResults) {
-      yield SearchLoading();
+    on<FetchSearchResults>((event, emit) async {
+      emit(SearchLoading());
 
       bool hasConnection = await InternetConnection().hasInternetAccess;
 
       if (hasConnection) {
-        yield* _fetchSearchResults(symbol: event.symbol);
+        await _fetchSearchResults(emit, symbol: event.symbol);
       } else {
-        yield SearchResultsLoadingError(message: 'No internet connection');
+        emit(SearchResultsLoadingError(message: 'No internet connection'));
       }
-    }
+    });
   }
 
-  Stream<SearchState> _fetchSavedSearches() async* {
-    yield SearchLoading();
+  // Updated to use emit
+  Future<void> _fetchSavedSearches(Emitter<SearchState> emit) async {
+    emit(SearchLoading());
 
-    final data = await this._client.fetch();
+    final data = await _client.fetch();
 
-    yield data.isEmpty
+    emit(data.isEmpty
         ? SearchResultsLoadingError(message: 'No recent searches')
-        : SearchData(data: data, listType: ListType.searchHistory);
+        : SearchData(data: data, listType: ListType.searchHistory));
   }
 
-  Stream<SearchState> _fetchSearchResults({required String symbol}) async* {
+  Future<void> _fetchSearchResults(Emitter<SearchState> emit,
+      {required String symbol}) async {
     try {
-      final data = await this._client.searchStock(symbol: symbol);
+      final data = await _client.searchStock(symbol: symbol);
 
-      yield data.isEmpty
+      emit(data.isEmpty
           ? SearchResultsLoadingError(message: 'No results were found')
-          : SearchData(data: data, listType: ListType.searchResults);
+          : SearchData(data: data, listType: ListType.searchResults));
     } catch (e, stack) {
-      yield SearchResultsLoadingError(message: 'There was an error loading');
+      emit(SearchResultsLoadingError(message: 'There was an error loading'));
       await SentryHelper(exception: e, stackTrace: stack).report();
     }
   }

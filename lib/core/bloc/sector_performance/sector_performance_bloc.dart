@@ -6,37 +6,39 @@ import 'package:stock_learner/core/models/markets/market_active/market_active_mo
 import 'package:stock_learner/core/models/markets/sector_performance/sector_performance_model.dart';
 import 'package:stock_learner/core/respository/market/market_client.dart';
 import 'package:stock_learner/core/utils/sentry_helper.dart';
+
 part 'sector_performance_event.dart';
 part 'sector_performance_state.dart';
 
 class SectorPerformanceBloc
     extends Bloc<SectorPerformanceEvent, SectorPerformanceState> {
-  SectorPerformanceBloc() : super(SectorPerformanceInitial());
-
-  @override
-  SectorPerformanceState get initialState => SectorPerformanceInitial();
-
-  @override
-  Stream<SectorPerformanceState> mapEventToState(
-      SectorPerformanceEvent event) async* {
-    if (event is FetchSectorPerformance) {
-      yield SectorPerformanceLoading();
-      yield* _fetchData();
-    }
+  SectorPerformanceBloc() : super(SectorPerformanceInitial()) {
+    // Registering the handler for the FetchSectorPerformance event
+    on<FetchSectorPerformance>((event, emit) async {
+      emit(SectorPerformanceLoading());
+      await _fetchData(emit);
+    });
   }
 
-  Stream<SectorPerformanceState> _fetchData() async* {
+  // Refactored _fetchData to use emit instead of yield
+  Future<void> _fetchData(Emitter<SectorPerformanceState> emit) async {
     try {
       final client = MarketClient();
 
-      yield SectorPerformanceLoaded(
-          sectorPerformance: await client.fetchSectorPerformance(),
-          marketActive: await client.fetchMarketActive(),
-          marketGainer: await client.fetchMarketGainers(),
-          marketLoser: await client.fetchMarketLosers());
+      final sectorPerformance = await client.fetchSectorPerformance();
+      final marketActive = await client.fetchMarketActive();
+      final marketGainer = await client.fetchMarketGainers();
+      final marketLoser = await client.fetchMarketLosers();
+
+      emit(SectorPerformanceLoaded(
+        sectorPerformance: sectorPerformance,
+        marketActive: marketActive,
+        marketGainer: marketGainer,
+        marketLoser: marketLoser,
+      ));
     } catch (e, stack) {
       await SentryHelper(exception: e, stackTrace: stack).report();
-      yield SectorPerformanceError(message: 'There was an unkwon error');
+      emit(SectorPerformanceError(message: 'There was an unknown error'));
     }
   }
 }
